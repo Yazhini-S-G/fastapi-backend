@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admins - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">AdminPro</div>
+            <nav class="sidebar-nav">
+                <a href="/superadmin.html" class="nav-item">Dashboard</a>
+                <a href="/users.html" class="nav-item" data-permission="view_user">Users</a>
+                <a href="/admins.html" class="nav-item active">Admins</a>
+                <a href="/roles.html" class="nav-item" data-permission="manage_roles">Roles & Permissions</a>
+                <a href="/reports.html" class="nav-item" data-permission="view_reports">Reports</a>
+                <a href="/profile.html" class="nav-item">Profile</a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">Admin Management</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar"></div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name"></div>
+                            <div class="role-badge" id="topbar-role"></div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">Logout</button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header" style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h1>Admins</h1>
+                        <p>Create admins and assign their current permissions.</p>
+                    </div>
+                    <button class="btn-primary" id="btn-create-admin">+ Create Admin</button>
+                </div>
+
+                <div class="glass table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Admin Name</th>
+                                <th>Email</th>
+                                <th>Current Permissions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admins-tbody">
+                            <tr><td colspan="4" style="text-align: center; padding: 32px;">Loading admins...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="admin-modal">
+        <div class="glass modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Create Admin</h2>
+                <button class="btn-ghost" id="btn-close-modal" style="font-size: 1.5rem; line-height: 1; padding: 0 8px;">&times;</button>
+            </div>
+            <form id="form-admin">
+                <input type="hidden" id="a-id">
+                <div id="admin-fields">
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="a-name">
+                    </div>
+                    <div class="form-group">
+                        <label>Email Address</label>
+                        <input type="email" id="a-email">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="a-password" minlength="8">
+                    </div>
+                    <div class="form-group">
+                        <label>Confirm Password</label>
+                        <input type="password" id="a-confirm" minlength="8">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="checkbox-grid" id="permissions-list"></div>
+                </div>
+                <div id="a-msg" style="color: var(--danger); margin-bottom: 16px; font-size: 0.9rem;"></div>
+                <button type="submit" class="btn-primary" style="width: 100%;">Save Permissions</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/auth-guard.js"></script>
+    <script src="/static/admins.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                AdminPro
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin.html" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+                <!-- Hidden by auth-guard if permission absent -->
+                <a href="/users.html" class="nav-item" data-permission="view_user">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Users
+                </a>
+                <!-- Hidden by auth-guard if permission absent -->
+                <a href="/reports.html" class="nav-item" data-permission="view_reports">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Reports
+                </a>
+                <a href="/roles.html" class="nav-item" data-permission="manage_roles">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Roles
+                </a>
+                <a href="/profile.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Profile
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">Admin Portal</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar">A</div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name">Admin</div>
+                            <div class="role-badge" id="topbar-role">Admin</div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header glass">
+                    <div style="padding: 24px;">
+                        <h1 id="welcome-msg">Welcome, Admin</h1>
+                        <p>Manage your assigned operational tasks.</p>
+                    </div>
+                </div>
+
+                <div class="grid-cards">
+                    <div class="stat-card glass" data-permission="view_user" style="display: none;">
+                        <div class="stat-title">Total Users</div>
+                        <div class="stat-value" id="stat-users">...</div>
+                    </div>
+                    <div class="stat-card glass" data-permission="view_reports" style="display: none;">
+                        <div class="stat-title">Reports Generated</div>
+                        <div class="stat-value" id="stat-reports">...</div>
+                    </div>
+                </div>
+
+                <div class="glass" style="padding: 32px;">
+                    <h2 style="margin-bottom: 24px; font-weight: 600;">Recent Activity</h2>
+                    <p style="color: var(--text-muted);">Activity logs will appear here based on your permissions.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/auth-guard.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const user = await AuthGuard.requireFreshUser();
+            if (!user) return;
+            AuthGuard.setupSidebar();
+            
+            // Adjust grid-cards display
+            document.querySelectorAll('.stat-card[data-permission]').forEach(el => {
+                const perm = el.getAttribute('data-permission');
+                if (AuthGuard.hasPermission(perm)) {
+                    el.style.display = 'flex';
+                }
+            });
+
+            // If we have view_user permission, fetch stats
+            if (AuthGuard.hasPermission('view_user')) {
+                try {
+                    const stats = await AuthGuard.apiCall('/rbac/stats');
+                    const usersEl = document.getElementById('stat-users');
+                    if(usersEl) usersEl.textContent = stats.total_users;
+                    const reportsEl = document.getElementById('stat-reports');
+                    if(reportsEl) reportsEl.textContent = stats.reports_generated;
+                } catch(e) {}
+            }
+        });
+    </script>
+</body>
+</html>

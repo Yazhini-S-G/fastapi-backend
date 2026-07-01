@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Reports - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                AdminPro
+            </div>
+            <nav class="sidebar-nav">
+                <a href="javascript:void(0)" class="nav-item" id="nav-dashboard">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+                <a href="/users.html" class="nav-item" data-permission="view_user">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                    Users & Admins
+                </a>
+                <a href="/roles.html" class="nav-item" data-permission="manage_roles">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    Roles & Permissions
+                </a>
+                <a href="/reports.html" class="nav-item active" data-permission="view_reports">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+                    Reports
+                </a>
+                <a href="/profile.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Profile
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">System Reports</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar"></div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name"></div>
+                            <div class="role-badge" id="topbar-role"></div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header">
+                    <h1>Reports Dashboard</h1>
+                    <p>View system analytics and user activity.</p>
+                </div>
+
+                <div class="glass table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Report Metric</th>
+                                <th>Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reports-tbody">
+                            <tr><td colspan="2" style="text-align: center; padding: 32px;">Loading reports...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/auth-guard.js"></script>
+    <script src="/static/reports.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const navDash = document.getElementById('nav-dashboard');
+            if (navDash) {
+                navDash.addEventListener('click', () => {
+                    const user = AuthGuard.getUser();
+                    if (user && user.roles.includes('Super Admin')) window.location.href = '/superadmin.html';
+                    else if (user && user.roles.includes('Admin')) window.location.href = '/admin.html';
+                    else window.location.href = '/dashboard.html';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

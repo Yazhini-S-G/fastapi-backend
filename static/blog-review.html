@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blog Review - AdminPro</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">AdminPro</div>
+            <nav class="sidebar-nav">
+                <a href="javascript:void(0)" class="nav-item" id="nav-dashboard">Dashboard</a>
+                <a href="/users.html" class="nav-item" data-permission="view_user">Users</a>
+                <a href="/roles.html" class="nav-item" data-permission="manage_roles">Roles & Permissions</a>
+                <a href="/reports.html" class="nav-item" data-permission="view_reports">Reports</a>
+                <a href="/blogs.html" class="nav-item" data-permission="create_blog">Blogs</a>
+                <a href="/blog-review.html" class="nav-item active" data-permission="review_blog">Blog Review</a>
+                <a href="/profile.html" class="nav-item">Profile</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">Review Queue</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar"></div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name"></div>
+                            <div class="role-badge" id="topbar-role"></div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">Logout</button>
+                </div>
+            </header>
+            <div class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Blog Review</h1>
+                        <p>Approve, reject, publish, feature, or delete submitted blogs.</p>
+                    </div>
+                </div>
+                <div class="glass form-row">
+                    <input id="review-search" type="search" placeholder="Search title, author, category, tags">
+                    <select id="review-status">
+                        <option value="">All Statuses</option>
+                        <option>Pending Review</option>
+                        <option>Draft</option>
+                        <option>Published</option>
+                        <option>Rejected</option>
+                    </select>
+                </div>
+                <div class="blog-grid" id="review-list">
+                    <div class="glass blog-card">Loading review queue...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="/static/auth-guard.js"></script>
+    <script src="/static/blog-review.js"></script>
+</body>
+</html>

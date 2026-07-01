@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - User Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                AdminPro
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/dashboard.html" class="nav-item active">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                    Dashboard
+                </a>
+                <a href="/profile.html" class="nav-item">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    Profile
+                </a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">User Portal</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar">U</div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name">User</div>
+                            <div class="role-badge" id="topbar-role">User</div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                    </button>
+                </div>
+            </header>
+
+            <div class="page-content">
+                <div class="page-header glass">
+                    <div style="padding: 24px;">
+                        <h1 id="welcome-msg">Welcome</h1>
+                        <p>This is your personal dashboard.</p>
+                    </div>
+                </div>
+
+                <div class="glass" style="padding: 32px;">
+                    <h2 style="margin-bottom: 24px; font-weight: 600;">Information</h2>
+                    <p style="color: var(--text-muted); line-height: 1.6;">
+                        You are currently logged in as a standard user. Navigate to your profile to view your details or change your password.
+                        If you need additional permissions, please contact your administrator.
+                    </p>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script src="/static/auth-guard.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const user = await AuthGuard.requireFreshUser();
+            if (!user) return;
+            AuthGuard.setupSidebar();
+            document.getElementById('welcome-msg').textContent = `Welcome, ${user.name.split(' ')[0]}`;
+        });
+    </script>
+</body>
+</html>

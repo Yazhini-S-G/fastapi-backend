@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Blogs - AdminPro</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">AdminPro</div>
+            <nav class="sidebar-nav">
+                <a href="javascript:void(0)" class="nav-item" id="nav-dashboard">Dashboard</a>
+                <a href="/users.html" class="nav-item" data-permission="view_user">Users</a>
+                <a href="/roles.html" class="nav-item" data-permission="manage_roles">Roles & Permissions</a>
+                <a href="/reports.html" class="nav-item" data-permission="view_reports">Reports</a>
+                <a href="/blogs.html" class="nav-item active" data-permission="create_blog">Blogs</a>
+                <a href="/blog-review.html" class="nav-item" data-permission="review_blog">Blog Review</a>
+                <a href="/profile.html" class="nav-item">Profile</a>
+            </nav>
+        </aside>
+        <main class="main-content">
+            <header class="topbar">
+                <div style="font-weight: 600; color: var(--text-muted);">Blog Workspace</div>
+                <div class="topbar-right">
+                    <div class="user-info">
+                        <div class="avatar" id="topbar-avatar"></div>
+                        <div class="user-details">
+                            <div class="username" id="topbar-name"></div>
+                            <div class="role-badge" id="topbar-role"></div>
+                        </div>
+                    </div>
+                    <button class="btn-ghost" id="btn-logout">Logout</button>
+                </div>
+            </header>
+            <div class="page-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Blogs</h1>
+                        <p>Create, submit, and track blog content.</p>
+                    </div>
+                    <button class="btn-primary" id="btn-new-blog" data-permission="create_blog">Create Blog</button>
+                </div>
+                <div class="grid-cards" id="blog-stats"></div>
+                <div class="glass form-row">
+                    <input id="blog-search" type="search" placeholder="Search title, author, or tags">
+                    <select id="blog-status">
+                        <option value="">All Statuses</option>
+                        <option>Draft</option>
+                        <option>Pending Review</option>
+                        <option>Published</option>
+                        <option>Rejected</option>
+                    </select>
+                    <select id="blog-category"><option value="">All Categories</option></select>
+                </div>
+                <div class="blog-grid" id="blogs-list">
+                    <div class="glass blog-card">Loading blogs...</div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="blog-modal">
+        <div class="glass modal-content modal-wide">
+            <div class="modal-header">
+                <h2 id="blog-modal-title">Create Blog</h2>
+                <button class="btn-ghost" id="btn-close-blog">&times;</button>
+            </div>
+            <form id="blog-form">
+                <input type="hidden" id="blog-id">
+                <input type="hidden" id="featured-image-path">
+                <div class="form-group">
+                    <label>Title</label>
+                    <input id="blog-title" required minlength="3" maxlength="255">
+                </div>
+                <div class="form-group">
+                    <label>Rich Text Content</label>
+                    <textarea id="blog-content" class="rich-editor" required></textarea>
+                </div>
+                <div class="form-row bare">
+                    <div class="form-group">
+                        <label>Category</label>
+                        <select id="blog-form-category"></select>
+                    </div>
+                    <div class="form-group">
+                        <label>Tags</label>
+                        <input id="blog-tags" placeholder="fastapi, internship, ai">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Featured Image</label>
+                    <input id="blog-image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+                    <img id="image-preview" class="image-preview hidden" alt="Featured image preview">
+                </div>
+                <div id="blog-msg" style="color: var(--danger); margin-bottom: 16px;"></div>
+                <div class="action-row">
+                    <button type="button" class="btn-ghost" id="btn-save-draft">Save Draft</button>
+                    <button type="button" class="btn-primary" id="btn-submit-review">Submit For Review</button>
+                    <button type="button" class="btn-primary" id="btn-publish-now" data-permission="publish_blog">Publish</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/auth-guard.js"></script>
+    <script src="/static/blogs.js"></script>
+</body>
+</html>
