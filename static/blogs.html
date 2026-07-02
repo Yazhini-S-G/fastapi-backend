@@ -43,15 +43,15 @@
                 </div>
                 <div class="grid-cards" id="blog-stats"></div>
                 <div class="glass form-row">
-                    <input id="blog-search" type="search" placeholder="Search title, author, or tags">
-                    <select id="blog-status">
+                    <input id="blog-search" type="search" placeholder="Search title, author, or tags" aria-label="Search blogs">
+                    <select id="blog-status" aria-label="Filter by status">
                         <option value="">All Statuses</option>
                         <option>Draft</option>
                         <option>Pending Review</option>
                         <option>Published</option>
                         <option>Rejected</option>
                     </select>
-                    <select id="blog-category"><option value="">All Categories</option></select>
+                    <select id="blog-category" aria-label="Filter by category"><option value="">All Categories</option></select>
                 </div>
                 <div class="blog-grid" id="blogs-list">
                     <div class="glass blog-card">Loading blogs...</div>
@@ -90,7 +90,7 @@
                 <div class="form-group">
                     <label for="blog-image">Featured Image</label>
                     <input id="blog-image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
-                    <img id="image-preview" class="image-preview hidden" alt="Featured image preview">
+                    <img id="image-preview" class="image-preview hidden" alt="Featured preview">
                 </div>
                 <div id="blog-msg" style="color: var(--danger); margin-bottom: 16px;"></div>
                 <div class="action-row">
