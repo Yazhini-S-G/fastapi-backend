@@ -82,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const id = document.getElementById('r-id').value;
         const role_name = document.getElementById('r-name').value;
         const description = document.getElementById('r-desc').value;
-        const permission_ids = Array.from(document.querySelectorAll('input[name="permissions"]:checked')).map(cb => parseInt(cb.value));
+        const permission_ids = Array.from(document.querySelectorAll('input[name="permissions"]:checked')).map(cb => Number.parseInt(cb.value, 10));
 
         try {
             if (id) {

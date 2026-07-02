@@ -67,7 +67,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         event.preventDefault();
         const msg = document.getElementById('a-msg');
         msg.textContent = '';
-        const permission_ids = Array.from(document.querySelectorAll('input[name="permissions"]:checked')).map(cb => parseInt(cb.value));
+        const permission_ids = Array.from(document.querySelectorAll('input[name="permissions"]:checked')).map(cb => Number.parseInt(cb.value, 10));
         const id = document.getElementById('a-id').value;
 
         try {

@@ -131,7 +131,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const email = document.getElementById('u-email').value;
         const is_active = document.getElementById('u-active').checked;
         const role_ids = AuthGuard.hasPermission('manage_roles')
-            ? Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(cb => parseInt(cb.value))
+            ? Array.from(document.querySelectorAll('input[name="roles"]:checked')).map(cb => Number.parseInt(cb.value, 10))
             : [];
 
         try {

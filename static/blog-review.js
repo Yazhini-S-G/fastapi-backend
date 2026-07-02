@@ -12,6 +12,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     let blogs = [];
 
+    function stripHtml(html) {
+        const div = document.createElement("div");
+        div.textContent = html;
+        return div.textContent;
+    }
+
     function imageUrl(path) {
         if (!path) return "";
         return path.startsWith("http") ? path : `${AuthGuard.BASE_URL}${path}`;
@@ -40,7 +46,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     <div class="badge badge-warning">${blog.status}</div>
                     <h3>${blog.title}</h3>
                     <div class="blog-meta">By ${blog.author_name} · ${blog.category_name || "Uncategorized"} · ${new Date(blog.created_at).toLocaleDateString()}</div>
-                    <p>${blog.content.replace(/<[^>]+>/g, "").slice(0, 220)}</p>
+                    <p>${stripHtml(blog.content).slice(0, 220)}</p>
                     <div class="action-row">
                         ${AuthGuard.hasPermission("review_blog") ? `<button class="btn-ghost set-status" data-id="${blog.id}" data-status="Pending Review">Approve</button><button class="btn-danger set-status" data-id="${blog.id}" data-status="Rejected">Reject</button>` : ""}
                         ${AuthGuard.hasPermission("publish_blog") ? `<button class="btn-primary set-status" data-id="${blog.id}" data-status="Published">Publish</button>` : ""}

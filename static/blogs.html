@@ -70,25 +70,25 @@
                 <input type="hidden" id="blog-id">
                 <input type="hidden" id="featured-image-path">
                 <div class="form-group">
-                    <label>Title</label>
-                    <input id="blog-title" required minlength="3" maxlength="255">
+                    <label for="blog-title">Title</label>
+                    <input type="text" id="blog-title" required minlength="3" maxlength="255">
                 </div>
                 <div class="form-group">
-                    <label>Rich Text Content</label>
+                    <label for="blog-content">Rich Text Content</label>
                     <textarea id="blog-content" class="rich-editor" required></textarea>
                 </div>
                 <div class="form-row bare">
                     <div class="form-group">
-                        <label>Category</label>
+                        <label for="blog-form-category">Category</label>
                         <select id="blog-form-category"></select>
                     </div>
                     <div class="form-group">
-                        <label>Tags</label>
-                        <input id="blog-tags" placeholder="fastapi, internship, ai">
+                        <label for="blog-tags">Tags</label>
+                        <input type="text" id="blog-tags" placeholder="fastapi, internship, ai">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Featured Image</label>
+                    <label for="blog-image">Featured Image</label>
                     <input id="blog-image" type="file" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
                     <img id="image-preview" class="image-preview hidden" alt="Featured image preview">
                 </div>

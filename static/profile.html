@@ -68,15 +68,15 @@
                         <h3 style="margin-bottom: 24px; font-weight: 600;">Change Password</h3>
                         <form id="form-change-pwd">
                             <div class="form-group">
-                                <label>Current Password</label>
+                                <label for="cp-old">Current Password</label>
                                 <input type="password" id="cp-old" required>
                             </div>
                             <div class="form-group">
-                                <label>New Password</label>
+                                <label for="cp-new">New Password</label>
                                 <input type="password" id="cp-new" required minlength="8">
                             </div>
                             <div class="form-group">
-                                <label>Confirm New Password</label>
+                                <label for="cp-confirm">Confirm New Password</label>
                                 <input type="password" id="cp-confirm" required minlength="8">
                             </div>
                             <div id="cp-msg" style="margin-bottom: 16px; font-size: 0.9rem;"></div>
@@ -90,15 +90,15 @@
                         <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 24px;">Use this form if you have received a reset token.</p>
                         <form id="form-reset-pwd">
                             <div class="form-group">
-                                <label>Reset Token</label>
+                                <label for="rp-token">Reset Token</label>
                                 <input type="text" id="rp-token" required>
                             </div>
                             <div class="form-group">
-                                <label>New Password</label>
+                                <label for="rp-new">New Password</label>
                                 <input type="password" id="rp-new" required minlength="8">
                             </div>
                             <div class="form-group">
-                                <label>Confirm New Password</label>
+                                <label for="rp-confirm">Confirm New Password</label>
                                 <input type="password" id="rp-confirm" required minlength="8">
                             </div>
                             <div id="rp-msg" style="margin-bottom: 16px; font-size: 0.9rem;"></div>

@@ -94,19 +94,19 @@
             <form id="form-user">
                 <input type="hidden" id="u-id">
                 <div class="form-group">
-                    <label>Full Name</label>
+                    <label for="u-name">Full Name</label>
                     <input type="text" id="u-name" required>
                 </div>
                 <div class="form-group">
-                    <label>Email Address</label>
+                    <label for="u-email">Email Address</label>
                     <input type="email" id="u-email" required>
                 </div>
                 <div class="form-group" id="pwd-group">
-                    <label>Password</label>
+                    <label for="u-password">Password</label>
                     <input type="password" id="u-password" minlength="8" placeholder="Leave blank to keep current (if editing)">
                 </div>
                 <div class="form-group" id="pwd-confirm-group">
-                    <label>Confirm Password</label>
+                    <label for="u-confirm">Confirm Password</label>
                     <input type="password" id="u-confirm" minlength="8">
                 </div>
                 <div class="form-group">
@@ -114,7 +114,7 @@
                     <div class="checkbox-grid" id="roles-list"></div>
                 </div>
                 <div class="form-group">
-                    <label class="checkbox-label" style="display: inline-flex; width: auto;">
+                    <label class="checkbox-label" for="u-active" style="display: inline-flex; width: auto;">
                         <input type="checkbox" id="u-active" checked> Active Account
                     </label>
                 </div>

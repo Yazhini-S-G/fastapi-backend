@@ -52,6 +52,12 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderBlogs();
     }
 
+    function stripHtml(html) {
+        const div = document.createElement("div");
+        div.textContent = html;
+        return div.textContent;
+    }
+
     function imageUrl(path) {
         if (!path) return "";
         return path.startsWith("http") ? path : `${AuthGuard.BASE_URL}${path}`;
@@ -69,7 +75,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 <div class="blog-card-body">
                     <div class="badge badge-primary">${blog.status}</div>
                     <h3>${blog.title}</h3>
-                    <p>${blog.content.replace(/<[^>]+>/g, "").slice(0, 140)}</p>
+                    <p>${stripHtml(blog.content).slice(0, 140)}</p>
                     <div class="blog-meta">${blog.category_name || "Uncategorized"} · ${blog.tags || "No tags"}</div>
                     <div class="action-row">
                         ${AuthGuard.hasPermission("edit_blog") || blog.author_id === currentUser.id ? `<button class="btn-ghost edit-blog" data-id="${blog.id}">Edit</button>` : ""}
@@ -122,7 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             const payload = {
                 title: document.getElementById("blog-title").value,
                 content: document.getElementById("blog-content").value,
-                category_id: document.getElementById("blog-form-category").value ? parseInt(document.getElementById("blog-form-category").value) : null,
+                category_id: document.getElementById("blog-form-category").value ? Number.parseInt(document.getElementById("blog-form-category").value, 10) : null,
                 tags: document.getElementById("blog-tags").value,
                 featured_image,
                 action,
