@@ -7,15 +7,15 @@ from httpx import AsyncClient
 @pytest.mark.asyncio
 async def test_register_login_profile_flow(client: AsyncClient) -> None:
     email = f"test_{uuid.uuid4().hex[:8]}@test.com"
-    password = f"TestPass_{uuid.uuid4().hex[:12]}!"
+    login_secret = f"TestPass_{uuid.uuid4().hex[:12]}!"
 
     register_response = await client.post(
         "/auth/register",
         json={
             "name": "Integration User",
             "email": email,
-            "password": password,
-            "confirm_password": password,
+            "password": login_secret,
+            "confirm_password": login_secret,
         },
     )
 
@@ -25,7 +25,7 @@ async def test_register_login_profile_flow(client: AsyncClient) -> None:
         "/auth/login",
         json={
             "email": email,
-            "password": password,
+            "password": login_secret,
         },
     )
 
@@ -44,12 +44,12 @@ async def test_register_login_profile_flow(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_login_invalid_password(client: AsyncClient) -> None:
-    wrong_password = f"WrongPass_{uuid.uuid4().hex[:12]}!"
+    invalid_secret = f"WrongPass_{uuid.uuid4().hex[:12]}!"
     response = await client.post(
         "/auth/login",
         json={
             "email": "wrong@test.com",
-            "password": wrong_password,
+            "password": invalid_secret,
         },
     )
 
