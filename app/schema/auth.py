@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 BCRYPT_MAX_PASSWORD_BYTES = 72
-PASSWORD_TOO_LONG_MESSAGE = "Password must be 72 bytes or fewer"
+PASSWORD_TOO_LONG_MESSAGE = "Password must be 72 bytes or fewer"  # nosec B105
 
 
 class LoginRequest(BaseModel):

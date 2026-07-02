@@ -36,10 +36,13 @@ from app.schema.auth import (
     ResetPasswordResponse,
 )
 
-INVALID_TOKEN = "Invalid token"
+INVALID_TOKEN = "Invalid token"  # nosec B105
+INVALID_REFRESH_TOKEN = "Invalid refresh token"  # nosec B105
+INVALID_RESET_TOKEN = "Invalid reset token"  # nosec B105
+
+
 PASSWORDS_DO_NOT_MATCH = "Passwords do not match"
-INVALID_REFRESH_TOKEN = "Invalid refresh token"
-INVALID_RESET_TOKEN = "Invalid reset token"
+
 
 router = APIRouter(
     prefix="/auth",

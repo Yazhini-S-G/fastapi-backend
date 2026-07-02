@@ -15,6 +15,6 @@ load_dotenv(env_file)
 async def client() -> AsyncIterator[AsyncClient]:
     async with AsyncClient(
         transport=ASGITransport(app=app),
-        base_url="http://test",
+        base_url="https://test",
     ) as client:
         yield client
