@@ -9,7 +9,15 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY app ./app
+COPY alembic ./alembic
+COPY static ./static
+COPY uploads ./uploads
+
+COPY alembic.ini .
+COPY pyproject.toml .
+COPY requirements.txt .
+COPY gunicorn_config.py .
 
 # Set correct ownership of /app
 RUN chown -R appuser:appgroup /app
