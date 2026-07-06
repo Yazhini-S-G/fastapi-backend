@@ -2,7 +2,7 @@ import asyncio
 import sys
 from pathlib import Path
 
-from fastapi import HTTPException
+from fastapi import HTTPException, Request
 from sqlalchemy import select
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -11,6 +11,11 @@ from app.core.database import DBSessionManager
 from app.models.user import User
 from app.router.auth import forgot_password
 from app.schema.auth import ForgotPasswordRequest
+
+
+def build_request() -> Request:
+    return Request({"type": "http", "method": "POST", "path": "/auth/forgot-password", "headers": []})
+
 
 EMAIL = "yazhinisg33@gmail.com"
 
@@ -34,7 +39,7 @@ async def run_flow() -> None:
     async with DBSessionManager.session() as db:
         try:
             result = await forgot_password(
-                request=None,  # type: ignore
+                request=build_request(),
                 payload=ForgotPasswordRequest(email=EMAIL),
                 db=db,
             )

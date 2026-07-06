@@ -21,6 +21,7 @@ update_git_config() {
     echo "configuring..."
     git config user.name "$desired_name"
     git config user.email "$desired_email"
+    return 0
     echo "Updated"
 }
 

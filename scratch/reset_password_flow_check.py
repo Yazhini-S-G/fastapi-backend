@@ -2,9 +2,11 @@ import asyncio
 import sys
 from pathlib import Path
 
-from sqlalchemy import select
-
+# Add project root to Python path before importing app modules
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from fastapi import Request
+from sqlalchemy import select
 
 from app.core.database import DBSessionManager
 from app.core.security import generate_password_reset_token, hash_password
@@ -13,14 +15,33 @@ from app.router.auth import login_user, reset_password
 from app.schema.auth import LoginRequest, ResetPasswordRequest
 
 
+def build_request(path: str) -> Request:
+    return Request(
+        {
+            "type": "http",
+            "method": "POST",
+            "path": path,
+            "headers": [],
+        }
+    )
+
+
+RESET_PASSWORD_PATH = "/auth/reset-password"
+LOGIN_PATH = "/auth/login"
+RESET_FLOW_EMAIL = "codex-reset-flow@example.com"
+OLD_PASSWORD = "OldPassword123!"
+NEW_PASSWORD = "NewPassword123!"
+
+
 async def main() -> None:
-    email = "codex-reset-flow@example.com"
-    old_password = "OldPassword123!"
-    new_password = "NewPassword123!"
+    email = RESET_FLOW_EMAIL
+    old_password = OLD_PASSWORD
+    new_password = NEW_PASSWORD
 
     async with DBSessionManager.session() as db:
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one_or_none()
+
         if user is None:
             user = User(
                 username=email,
@@ -40,7 +61,7 @@ async def main() -> None:
 
     async with DBSessionManager.session() as db:
         response = await reset_password(
-            request=None,  # type: ignore
+            request=build_request(RESET_PASSWORD_PATH),
             payload=ResetPasswordRequest(
                 reset_token=token,
                 new_password=new_password,
@@ -53,16 +74,21 @@ async def main() -> None:
     async with DBSessionManager.session() as db:
         result = await db.execute(select(User).where(User.email == email))
         user = result.scalar_one()
+
         print("token_hash_removed=", user.password_reset_token_hash is None)
         print("expires_at_removed=", user.password_reset_expires_at is None)
 
     async with DBSessionManager.session() as db:
         tokens = await login_user(
-            request=None,  # type: ignore
-            payload=LoginRequest(email=email, password=new_password),
+            request=build_request(LOGIN_PATH),
+            payload=LoginRequest(
+                email=email,
+                password=new_password,
+            ),
             db=db,
         )
         print("login_with_new_password=", bool(tokens.get("access_token")))
 
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

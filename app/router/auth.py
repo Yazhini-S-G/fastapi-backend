@@ -48,6 +48,7 @@ from app.schema.auth import (
 INVALID_TOKEN = "Invalid token"  # nosec B105
 INVALID_REFRESH_TOKEN = "Invalid refresh token"  # nosec B105
 INVALID_RESET_TOKEN = "Invalid reset token"  # nosec B105
+BEARER_AUTH_SCHEME = "bearer"
 
 
 PASSWORDS_DO_NOT_MATCH = PASSWORDS_DO_NOT_MATCH_DETAIL
@@ -201,7 +202,7 @@ async def login_user(request: Request, payload: LoginRequest, db: DBSessionDep) 
     return {
         "access_token": create_access_token(token_data),
         "refresh_token": create_refresh_token(token_data),
-        "token_type": "bearer",
+        "token_type": BEARER_AUTH_SCHEME,
     }
 
 
@@ -251,7 +252,9 @@ async def refresh_token(payload: RefreshTokenRequest, db: DBSessionDep) -> Refre
 
     token_data = {"sub": str(user.id), "email": user.email}
 
-    return RefreshTokenResponse(**{"access_token": create_access_token(token_data), "token_type": "bearer"})
+    return RefreshTokenResponse(
+        **{"access_token": create_access_token(token_data), "token_type": BEARER_AUTH_SCHEME}
+    )
 
 
 @router.post("/forgot-password")

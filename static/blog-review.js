@@ -1,4 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
+function imageUrl(path) {
+    if (!path) return "";
+    return path.startsWith("http") ? path : `${AuthGuard.BASE_URL}${path}`;
+}
+
     const currentUser = await AuthGuard.requireFreshUser();
     if (!currentUser) return;
     if (!AuthGuard.hasPermission("review_blog") && !AuthGuard.hasPermission("publish_blog")) {
@@ -18,18 +23,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         return div.textContent;
     }
 
-    function imageUrl(path) {
-        if (!path) return "";
-        return path.startsWith("http") ? path : `${AuthGuard.BASE_URL}${path}`;
-    }
-
     async function loadReview() {
         const params = new URLSearchParams();
         const search = document.getElementById("review-search").value.trim();
         const status = document.getElementById("review-status").value;
         if (search) params.set("search", search);
         if (status) params.set("status_filter", status);
-        blogs = await AuthGuard.apiCall(`/blogs${params.toString() ? `?${params}` : ""}`);
+        const queryString = params.toString();
+        blogs = await AuthGuard.apiCall(queryString ? `/blogs?${queryString}` : "/blogs");
         renderReview();
     }
 

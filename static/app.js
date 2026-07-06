@@ -52,9 +52,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             AuthGuard.setToken(data.access_token);
             const user = await AuthGuard.fetchUser();
             
-            if (user && user.roles.includes('Super Admin')) {
+            if (user?.roles.includes('Super Admin')) {
                 window.location.href = '/superadmin.html';
-            } else if (user && user.roles.includes('Admin')) {
+            } else if (user?.roles.includes('Admin')) {
                 window.location.href = '/admin.html';
             } else {
                 window.location.href = '/dashboard.html';

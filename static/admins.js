@@ -43,7 +43,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     function renderPermissions(admin = null) {
         document.getElementById('permissions-list').innerHTML = permissions.map(permission => `
             <label class="checkbox-label">
-                <input type="checkbox" name="permissions" value="${permission.id}" ${admin && admin.permissions.includes(permission.permission_name) ? 'checked' : ''}>
+                <input type="checkbox" name="permissions" value="${permission.id}" ${admin?.permissions.includes(permission.permission_name) ? 'checked' : ''}>
                 ${permission.permission_name}
             </label>
         `).join('');

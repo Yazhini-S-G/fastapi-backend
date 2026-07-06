@@ -26,18 +26,18 @@ class AuthGuard {
     static hasPermission(permissionName) {
         const user = this.getUser();
         if (!user) return false;
-        if (user.roles && user.roles.includes('Super Admin')) return true;
-        return user.permissions && user.permissions.includes(permissionName);
+        if (user.roles?.includes('Super Admin')) return true;
+        return user.permissions?.includes(permissionName);
     }
 
     static hasRole(roleName) {
         const user = this.getUser();
-        return !!(user && user.roles && user.roles.includes(roleName));
+        return !!user?.roles?.includes(roleName);
     }
 
     static dashboardFor(user = this.getUser()) {
-        if (user && user.roles.includes('Super Admin')) return '/superadmin.html';
-        if (user && user.roles.includes('Admin')) return '/admin.html';
+        if (user?.roles.includes('Super Admin')) return '/superadmin.html';
+        if (user?.roles.includes('Admin')) return '/admin.html';
         return '/dashboard.html';
     }
 
@@ -75,18 +75,19 @@ class AuthGuard {
         return user;
     }
 
-    static async apiCall(endpoint, options = {}) {
+    static async apiCall(endpoint, options) {
         const token = this.getToken();
-        const isFormData = options.body instanceof FormData;
+        const requestOptions = options ?? {};
+        const isFormData = requestOptions.body instanceof FormData;
         const headers = {
             ...(!isFormData && { 'Content-Type': 'application/json' }),
             ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...(options.headers || {})
+            ...(requestOptions.headers || {})
         };
 
         const response = await fetch(`${this.BASE_URL}${endpoint}`, {
             mode: 'cors',
-            ...options,
+            ...requestOptions,
             headers
         });
 
@@ -102,7 +103,7 @@ class AuthGuard {
 
         const data = await response.json().catch(() => null);
         if (!response.ok) {
-            throw new Error((data && data.detail) || "API Error");
+            throw new Error(data?.detail || "API Error");
         }
         return data;
     }
@@ -123,7 +124,7 @@ class AuthGuard {
 
         // Guard menu items
         document.querySelectorAll('[data-permission]').forEach(el => {
-            const perm = el.getAttribute('data-permission');
+            const perm = el.dataset.permission;
             if (perm && !this.hasPermission(perm)) {
                 el.style.display = 'none';
             }
@@ -135,7 +136,9 @@ class AuthGuard {
             logoutBtn.addEventListener('click', async () => {
                 try {
                     await this.apiCall('/auth/logout', { method: 'POST' });
-                } catch(e) {}
+                } catch(e) {
+                    console.error('Logout request failed', e);
+                }
                 this.clearToken();
                 window.location.href = '/index.html';
             });
@@ -156,8 +159,8 @@ class AuthGuard {
         reviewLink.className = 'nav-item';
         reviewLink.dataset.permission = 'review_blog';
         reviewLink.textContent = 'Blog Review';
-        nav.insertBefore(blogsLink, profileLink);
-        nav.insertBefore(reviewLink, profileLink);
+        profileLink.before(blogsLink);
+        profileLink.before(reviewLink);
     }
 }
 

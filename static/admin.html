@@ -94,7 +94,7 @@
             
             // Adjust grid-cards display
             document.querySelectorAll('.stat-card[data-permission]').forEach(el => {
-                const perm = el.getAttribute('data-permission');
+                const perm = el.dataset.permission;
                 if (AuthGuard.hasPermission(perm)) {
                     el.style.display = 'flex';
                 }
@@ -108,7 +108,9 @@
                     if(usersEl) usersEl.textContent = stats.total_users;
                     const reportsEl = document.getElementById('stat-reports');
                     if(reportsEl) reportsEl.textContent = stats.reports_generated;
-                } catch(e) {}
+                } catch(e) {
+                    console.error('Failed to load admin stats', e);
+                }
             }
         });
     </script>

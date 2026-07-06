@@ -4,6 +4,8 @@ import uuid
 
 import requests
 
+TEST_PASSWORD = "Password123!"
+
 
 # Generate a unique email
 def generate_email() -> str:
@@ -18,8 +20,8 @@ login_url = "http://127.0.0.1:8001/auth/login"
 payload = {
     "name": "Test User",
     "email": email,
-    "password": "Password123!",
-    "confirm_password": "Password123!"
+    "password": TEST_PASSWORD,
+    "confirm_password": TEST_PASSWORD
 }
 headers = {"Content-Type": "application/json"}
 
@@ -35,7 +37,7 @@ except Exception as e:
     sys.exit(1)
 
 # Login user
-login_payload = {"email": email, "password": "Password123!"}
+login_payload = {"email": email, "password": TEST_PASSWORD}
 try:
     resp = requests.post(login_url, data=json.dumps(login_payload), headers=headers)
     print("Login status:", resp.status_code)
