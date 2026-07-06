@@ -13,8 +13,5 @@ load_dotenv(env_file)
 
 @pytest_asyncio.fixture(scope="module", loop_scope="module")
 async def client() -> AsyncIterator[AsyncClient]:
-    async with AsyncClient(
-        transport=ASGITransport(app=app),
-        base_url="https://test",
-    ) as client:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="https://test") as client:
         yield client

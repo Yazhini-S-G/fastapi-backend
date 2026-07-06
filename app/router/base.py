@@ -32,10 +32,7 @@ async def health_check(db: Annotated[AsyncSession, Depends(get_db)]) -> JSONResp
         )
     except SQLAlchemyError as e:
         logger.exception(f"Unexpected health check failure: {e}")
-        return JSONResponse(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            content={"error": str(e)}
-        )
+        return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"error": str(e)})
 
 
 @router.get("/pulse")

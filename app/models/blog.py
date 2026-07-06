@@ -4,9 +4,18 @@ from typing import TYPE_CHECKING
 from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.constants import (
+    BLOG_STATUS_APPROVED,
+    BLOG_STATUS_DRAFT,
+    BLOG_STATUS_PENDING_REVIEW,
+    BLOG_STATUS_PUBLISHED,
+    BLOG_STATUS_REJECTED,
+    CASCADE_ON_DELETE,
+    USER_ID_FOREIGN_KEY,
+)
+
 from . import Base
 
-USER_ID_FOREIGN_KEY = "user.id"
 SET_NULL_ON_DELETE = "SET NULL"
 
 if TYPE_CHECKING:
@@ -33,7 +42,7 @@ class Blog(Base):
 
     # Creator
     author_id: Mapped[int] = mapped_column(
-        ForeignKey(USER_ID_FOREIGN_KEY, ondelete="CASCADE"), nullable=False
+        ForeignKey(USER_ID_FOREIGN_KEY, ondelete=CASCADE_ON_DELETE), nullable=False
     )
     category_id: Mapped[int | None] = mapped_column(
         ForeignKey("blog_categories.id", ondelete=SET_NULL_ON_DELETE), nullable=True
@@ -41,18 +50,23 @@ class Blog(Base):
     tags: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     status: Mapped[str] = mapped_column(
-        Enum("Draft", "Pending Review", "Approved", "Published", "Rejected", name="blog_status"),
-        nullable=False, server_default="Draft"
+        Enum(
+            BLOG_STATUS_DRAFT,
+            BLOG_STATUS_PENDING_REVIEW,
+            BLOG_STATUS_APPROVED,
+            BLOG_STATUS_PUBLISHED,
+            BLOG_STATUS_REJECTED,
+            name="blog_status",
+        ),
+        nullable=False,
+        server_default=BLOG_STATUS_DRAFT,
     )
     is_featured: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
-        nullable=False
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
     # Approver

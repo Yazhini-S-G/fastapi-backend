@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends, HTTPException, status
 from sqlalchemy import select
 
+from app.constants import ACCESS_DENIED_DETAIL, ROLE_SUPER_ADMIN
 from app.core.database import DBSessionDep
 from app.models.role import Permission, Role, RolePermission, UserRole
 from app.models.user import User
@@ -22,10 +23,8 @@ async def get_user_role_names(db: DBSessionDep, user_id: int) -> list[str]:
 
 async def get_user_permissions(db: DBSessionDep, user_id: int) -> list[str]:
     role_names = await get_user_role_names(db, user_id)
-    if "Super Admin" in role_names:
-        result = await db.execute(
-            select(Permission.permission_name).order_by(Permission.permission_name)
-        )
+    if ROLE_SUPER_ADMIN in role_names:
+        result = await db.execute(select(Permission.permission_name).order_by(Permission.permission_name))
         return list(result.scalars().all())
 
     # Permissions from roles
@@ -51,7 +50,7 @@ async def get_user_permissions(db: DBSessionDep, user_id: int) -> list[str]:
 
 async def user_has_permission(db: DBSessionDep, user_id: int, permission_name: str) -> bool:
     role_names = await get_user_role_names(db, user_id)
-    if "Super Admin" in role_names:
+    if ROLE_SUPER_ADMIN in role_names:
         return True
     permissions = await get_user_permissions(db, user_id)
     return permission_name in permissions
@@ -60,15 +59,9 @@ async def user_has_permission(db: DBSessionDep, user_id: int, permission_name: s
 def require_permission(permission_name: str) -> Callable[..., object]:
     from app.router.auth import get_current_user
 
-    async def dependency(
-        current_user: Annotated[User, Depends(get_current_user)],
-        db: DBSessionDep,
-    ) -> User:
+    async def dependency(current_user: Annotated[User, Depends(get_current_user)], db: DBSessionDep) -> User:
         if not await user_has_permission(db, current_user.id, permission_name):
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access Denied",
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ACCESS_DENIED_DETAIL)
         return current_user
 
     return dependency

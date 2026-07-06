@@ -20,18 +20,12 @@ def test_refresh_token_without_token() -> None:
 
 
 def test_login_missing_fields() -> None:
-    response = client.post(
-        "/auth/login",
-        json={}
-    )
+    response = client.post("/auth/login", json={})
 
     assert response.status_code in [400, 401, 422]
 
 
 def test_register_missing_fields() -> None:
-    response = client.post(
-        "/auth/register",
-        json={}
-    )
+    response = client.post("/auth/register", json={})
 
     assert response.status_code in [400, 422]

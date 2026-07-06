@@ -3,17 +3,19 @@ import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 
+from app.constants import UTF_8_ENCODING
+
 PASSWORD_RESET_TOKEN_EXPIRE_MINUTES = 15
 
 
 def hash_password(password: str) -> str:
     """Hash a password using SHA-256."""
-    return hashlib.sha256(password.encode('utf-8')).hexdigest()
+    return hashlib.sha256(password.encode(UTF_8_ENCODING)).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a SHA-256 hashed password."""
-    return hashlib.sha256(plain_password.encode('utf-8')).hexdigest() == hashed_password
+    return hashlib.sha256(plain_password.encode(UTF_8_ENCODING)).hexdigest() == hashed_password
 
 
 def generate_password_reset_token() -> tuple[str, str, datetime]:
@@ -24,7 +26,7 @@ def generate_password_reset_token() -> tuple[str, str, datetime]:
 
 
 def hash_reset_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return hashlib.sha256(token.encode(UTF_8_ENCODING)).hexdigest()
 
 
 def verify_password_reset_token(token: str, token_hash: str | None, expires_at: datetime | None) -> bool:

@@ -21,22 +21,13 @@ async def test_register_login_profile_flow(client: AsyncClient) -> None:
 
     assert register_response.status_code in [200, 201]
 
-    login_response = await client.post(
-        "/auth/login",
-        json={
-            "email": email,
-            "password": login_secret,
-        },
-    )
+    login_response = await client.post("/auth/login", json={"email": email, "password": login_secret})
 
     assert login_response.status_code == 200
 
     token = login_response.json()["access_token"]
 
-    profile_response = await client.get(
-        "/auth/profile",
-        headers={"Authorization": f"Bearer {token}"},
-    )
+    profile_response = await client.get("/auth/profile", headers={"Authorization": f"Bearer {token}"})
 
     assert profile_response.status_code == 200
     assert profile_response.json()["email"] == email
@@ -45,13 +36,7 @@ async def test_register_login_profile_flow(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_login_invalid_password(client: AsyncClient) -> None:
     invalid_secret = f"WrongPass_{uuid.uuid4().hex[:12]}!"
-    response = await client.post(
-        "/auth/login",
-        json={
-            "email": "wrong@test.com",
-            "password": invalid_secret,
-        },
-    )
+    response = await client.post("/auth/login", json={"email": "wrong@test.com", "password": invalid_secret})
 
     assert response.status_code == 401
 

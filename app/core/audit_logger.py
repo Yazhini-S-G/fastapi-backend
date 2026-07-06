@@ -26,7 +26,7 @@ def log_audit_event(
     description: str,
     request: Request | None = None,
     email: str | None = None,
-    status: str = "Success"
+    status: str = "Success",
 ) -> None:
     ip_address = None
     if request:

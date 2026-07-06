@@ -27,15 +27,9 @@ class User(Base):
     password_reset_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
 
-    roles: Mapped[list["Role"]] = relationship(
-        secondary="user_roles",
-        back_populates="users"
-    )
+    roles: Mapped[list["Role"]] = relationship(secondary="user_roles", back_populates="users")
 
     # Only link author_id → avoids ambiguity with approved_by_id / published_by_id
     blogs: Mapped[list["Blog"]] = relationship(
-        "Blog",
-        foreign_keys="Blog.author_id",
-        back_populates="author",
-        cascade="all, delete-orphan"
+        "Blog", foreign_keys="Blog.author_id", back_populates="author", cascade="all, delete-orphan"
     )

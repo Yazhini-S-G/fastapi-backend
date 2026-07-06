@@ -33,7 +33,7 @@ class RedisHelper:
         value: str | bytes | int | float | dict[str, object] | list[object] | bool,
         *,
         expire: int | None = None,
-        to_json: bool = False
+        to_json: bool = False,
     ) -> bool:
         """To Set key-value pair in Redis."""
         try:
@@ -64,11 +64,8 @@ class RedisHelper:
             return False
 
     async def get(
-            self,
-            key: str,
-            *,
-            to_json: bool = False
-        ) -> str | int | float | bool | dict[str, object] | list[object] | None:
+        self, key: str, *, to_json: bool = False
+    ) -> str | int | float | bool | dict[str, object] | list[object] | None:
         """Get value for key from Redis."""
         try:
             val: str | bytes | bytearray | None = await self.redis_client.get(key)
@@ -78,8 +75,7 @@ class RedisHelper:
             if val and to_json:
                 try:
                     return cast(
-                        "dict[str, object] | list[object] | str | int | float | bool",
-                        json.loads(val)
+                        "dict[str, object] | list[object] | str | int | float | bool", json.loads(val)
                     )
                 except (JSONDecodeError, TypeError) as e:
                     logger.exception(f"Error decoding JSON from Redis: {e!r}")

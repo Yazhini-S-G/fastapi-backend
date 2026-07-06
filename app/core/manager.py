@@ -6,6 +6,26 @@ from fastapi import FastAPI
 from sqlalchemy import delete, func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.constants import (
+    BLOG_STATUS_APPROVED,
+    PERM_CREATE_BLOG,
+    PERM_DELETE_BLOG,
+    PERM_EDIT_BLOG,
+    PERM_EDIT_OWN_BLOG,
+    PERM_FEATURE_BLOG,
+    PERM_MANAGE_BLOG_CATEGORIES,
+    PERM_PUBLISH_BLOG,
+    PERM_REVIEW_BLOG,
+    PERM_SAVE_DRAFT,
+    PERM_SUBMIT_FOR_REVIEW,
+    PERM_UPLOAD_BLOG_IMAGE,
+    PERM_VIEW_BLOG,
+    PERM_VIEW_BLOG_ANALYTICS,
+    PERM_VIEW_REPORTS,
+    ROLE_ADMIN,
+    ROLE_SUPER_ADMIN,
+    ROLE_USER,
+)
 from app.core.database import DBSessionManager, engine
 from app.core.email import validate_smtp_config_for_startup
 from app.models import Base
@@ -17,21 +37,21 @@ DEFAULT_PERMISSIONS = [
     "view_user",
     "edit_user",
     "delete_user",
-    "view_reports",
+    PERM_VIEW_REPORTS,
     "manage_roles",
-    "create_blog",
-    "view_blog",
-    "edit_own_blog",
-    "upload_blog_image",
-    "save_draft",
-    "submit_for_review",
-    "edit_blog",
-    "delete_blog",
-    "review_blog",
-    "publish_blog",
-    "feature_blog",
-    "manage_blog_categories",
-    "view_blog_analytics",
+    PERM_CREATE_BLOG,
+    PERM_VIEW_BLOG,
+    PERM_EDIT_OWN_BLOG,
+    PERM_UPLOAD_BLOG_IMAGE,
+    PERM_SAVE_DRAFT,
+    PERM_SUBMIT_FOR_REVIEW,
+    PERM_EDIT_BLOG,
+    PERM_DELETE_BLOG,
+    PERM_REVIEW_BLOG,
+    PERM_PUBLISH_BLOG,
+    PERM_FEATURE_BLOG,
+    PERM_MANAGE_BLOG_CATEGORIES,
+    PERM_VIEW_BLOG_ANALYTICS,
     "view_traffic_analytics",
     "view_session_reports",
     "export_csv_reports",
@@ -53,15 +73,15 @@ DEFAULT_PERMISSIONS = [
 ]
 
 DEFAULT_ROLES = {
-    "Super Admin": DEFAULT_PERMISSIONS,
-    "Admin": [],
-    "User": [
-        "create_blog",
-        "view_blog",
-        "edit_own_blog",
-        "upload_blog_image",
-        "save_draft",
-        "submit_for_review",
+    ROLE_SUPER_ADMIN: DEFAULT_PERMISSIONS,
+    ROLE_ADMIN: [],
+    ROLE_USER: [
+        PERM_CREATE_BLOG,
+        PERM_VIEW_BLOG,
+        PERM_EDIT_OWN_BLOG,
+        PERM_UPLOAD_BLOG_IMAGE,
+        PERM_SAVE_DRAFT,
+        PERM_SUBMIT_FOR_REVIEW,
     ],
 }
 
@@ -84,15 +104,10 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # Create tables on startup
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        await conn.execute(
-            text("ALTER TYPE blog_status ADD VALUE IF NOT EXISTS 'Approved'")
-        )
+        await conn.execute(text(f"ALTER TYPE blog_status ADD VALUE IF NOT EXISTS '{BLOG_STATUS_APPROVED}'"))
         await conn.execute(text("ALTER TABLE blogs ADD COLUMN IF NOT EXISTS tags TEXT"))
         await conn.execute(
-            text(
-                "ALTER TABLE blogs ADD COLUMN IF NOT EXISTS "
-                "is_featured BOOLEAN NOT NULL DEFAULT FALSE"
-            )
+            text("ALTER TABLE blogs ADD COLUMN IF NOT EXISTS is_featured BOOLEAN NOT NULL DEFAULT FALSE")
         )
     await seed_rbac_defaults()
     yield
@@ -100,17 +115,13 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 
 async def _ensure_role_permissions(
-    db: AsyncSession,
-    role: Role,
-    role_permissions: list[str],
-    permissions: dict[str, Permission],
+    db: AsyncSession, role: Role, role_permissions: list[str], permissions: dict[str, Permission]
 ) -> None:
     for permission_name in role_permissions:
         permission = permissions[permission_name]
         exists_result = await db.execute(
             select(RolePermission).where(
-                RolePermission.role_id == role.id,
-                RolePermission.permission_id == permission.id,
+                RolePermission.role_id == role.id, RolePermission.permission_id == permission.id
             )
         )
         if exists_result.scalar_one_or_none() is None:
@@ -131,8 +142,7 @@ async def seed_rbac_defaults() -> None:
             permission = perm_result.scalar_one_or_none()
             if permission is None:
                 permission = Permission(
-                    permission_name=permission_name,
-                    description=permission_name.replace("_", " ").title()
+                    permission_name=permission_name, description=permission_name.replace("_", " ").title()
                 )
                 db.add(permission)
                 await db.flush()
@@ -162,47 +172,37 @@ async def seed_rbac_defaults() -> None:
             .order_by(User.id.asc())
         )
         for index, user in enumerate(users_without_roles.scalars().all()):
-            role_name = "Super Admin" if index == 0 else "User"
+            role_name = ROLE_SUPER_ADMIN if index == 0 else ROLE_USER
             db.add(UserRole(user_id=user.id, role_id=roles[role_name].id))
 
         await db.commit()
 
 
-async def _delete_duplicate_dependencies(
-    db: AsyncSession,
-    model: type[Permission] | type[Role],
-    duplicate: Base,
-) -> None:
-    if model is Permission:
-        await db.execute(
-            delete(RolePermission).where(
-                RolePermission.permission_id == cast("Permission", duplicate).id
-            )
-        )
+async def _delete_duplicate_dependencies(db: AsyncSession, duplicate: Permission | Role) -> None:
+    if isinstance(duplicate, Permission):
+        await db.execute(delete(RolePermission).where(RolePermission.permission_id == duplicate.id))
         return
 
-    role_id = cast("Role", duplicate).id
-    await db.execute(delete(RolePermission).where(RolePermission.role_id == role_id))
-    await db.execute(delete(UserRole).where(UserRole.role_id == role_id))
+    await db.execute(delete(RolePermission).where(RolePermission.role_id == duplicate.id))
+    await db.execute(delete(UserRole).where(UserRole.role_id == duplicate.id))
 
 
 async def deduplicate_seed_rows(db: AsyncSession) -> None:
-    for model, column in (
-        (Permission, Permission.permission_name),
-        (Role, Role.role_name),
-    ):
+    for model, column in ((Permission, Permission.permission_name), (Role, Role.role_name)):
         names = await db.execute(select(column).group_by(column).having(func.count(model.id) > 1))
         for name in names.scalars().all():
             rows = await db.execute(select(model).where(column == name).order_by(model.id.asc()))
             for duplicate in rows.scalars().all()[1:]:
-                await _delete_duplicate_dependencies(db, model, duplicate)
+                await _delete_duplicate_dependencies(
+                    db, cast("Permission | Role", duplicate),
+                )
                 await db.delete(duplicate)
 
     for link_model, first_col, second_col in (
         (RolePermission, RolePermission.role_id, RolePermission.permission_id),
         (UserRole, UserRole.user_id, UserRole.role_id),
     ):
-        link_model_id = cast("type[RolePermission]", link_model).id
+        link_model_id = link_model.id
         duplicates = await db.execute(
             select(func.min(link_model_id), first_col, second_col)
             .group_by(first_col, second_col)
@@ -211,9 +211,7 @@ async def deduplicate_seed_rows(db: AsyncSession) -> None:
         for keep_id, first_id, second_id in duplicates.all():
             await db.execute(
                 delete(link_model).where(
-                    first_col == first_id,
-                    second_col == second_id,
-                    link_model_id != keep_id,
+                    first_col == first_id, second_col == second_id, link_model_id != keep_id
                 )
             )
 

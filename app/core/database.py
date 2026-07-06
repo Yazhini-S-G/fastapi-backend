@@ -25,10 +25,7 @@ class DBSettings(BaseSettings):
     db_host: str = "localhost"
     db_port: int = 5433
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def db_url(self) -> str:

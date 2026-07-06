@@ -1,5 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
+from app.constants import UTF_8_ENCODING
+
 BCRYPT_MAX_PASSWORD_BYTES = 72
 PASSWORD_TOO_LONG_MESSAGE = "Password must be 72 bytes or fewer"  # nosec B105
 
@@ -11,7 +13,7 @@ class LoginRequest(BaseModel):
     @field_validator("password")
     @classmethod
     def validate_bcrypt_password_length(cls, value: str) -> str:
-        if len(value.encode("utf-8")) > BCRYPT_MAX_PASSWORD_BYTES:
+        if len(value.encode(UTF_8_ENCODING)) > BCRYPT_MAX_PASSWORD_BYTES:
             msg = PASSWORD_TOO_LONG_MESSAGE
             raise ValueError(msg)
         return value
@@ -41,7 +43,7 @@ class ResetPasswordRequest(BaseModel):
     @field_validator("new_password", "confirm_password")
     @classmethod
     def validate_bcrypt_password_length(cls, value: str) -> str:
-        if len(value.encode("utf-8")) > BCRYPT_MAX_PASSWORD_BYTES:
+        if len(value.encode(UTF_8_ENCODING)) > BCRYPT_MAX_PASSWORD_BYTES:
             msg = PASSWORD_TOO_LONG_MESSAGE
             raise ValueError(msg)
         return value
@@ -59,7 +61,7 @@ class ChangePasswordRequest(BaseModel):
     @field_validator("old_password", "new_password", "confirm_password")
     @classmethod
     def validate_bcrypt_password_length(cls, value: str) -> str:
-        if len(value.encode("utf-8")) > BCRYPT_MAX_PASSWORD_BYTES:
+        if len(value.encode(UTF_8_ENCODING)) > BCRYPT_MAX_PASSWORD_BYTES:
             msg = PASSWORD_TOO_LONG_MESSAGE
             raise ValueError(msg)
         return value
@@ -96,7 +98,7 @@ class RegisterRequest(BaseModel):
     @field_validator("password", "confirm_password")
     @classmethod
     def validate_bcrypt_password_length(cls, value: str) -> str:
-        if len(value.encode("utf-8")) > BCRYPT_MAX_PASSWORD_BYTES:
+        if len(value.encode(UTF_8_ENCODING)) > BCRYPT_MAX_PASSWORD_BYTES:
             msg = PASSWORD_TOO_LONG_MESSAGE
             raise ValueError(msg)
         return value

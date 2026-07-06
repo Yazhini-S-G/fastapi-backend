@@ -3,6 +3,19 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy import delete, func, select
 
+from app.constants import ACCESS_DENIED_DETAIL as SHARED_ACCESS_DENIED_DETAIL
+from app.constants import (
+    BLOG_STATUS_PUBLISHED,
+    EMAIL_ALREADY_EXISTS_DETAIL,
+    MODULE_ROLE_MANAGEMENT,
+    MODULE_USER_MANAGEMENT,
+    PASSWORDS_DO_NOT_MATCH_DETAIL,
+    PERM_MANAGE_ROLES,
+    PERM_VIEW_REPORTS,
+    ROLE_ADMIN,
+    ROLE_SUPER_ADMIN,
+    ROLE_USER,
+)
 from app.core.audit_logger import log_audit_event
 from app.core.database import DBSessionDep
 from app.core.rbac import get_user_permissions, get_user_role_names, require_permission
@@ -25,21 +38,22 @@ from app.schema.rbac import (
 
 router = APIRouter(prefix="/rbac", tags=["rbac"])
 
-SUPER_ADMIN_ROLE = "Super Admin"
-ADMIN_ROLE = "Admin"
-USER_ROLE = "User"
-MANAGE_ROLES_PERMISSION = "manage_roles"
-ACCESS_DENIED_DETAIL = "Access Denied"
+SUPER_ADMIN_ROLE = ROLE_SUPER_ADMIN
+ADMIN_ROLE = ROLE_ADMIN
+USER_ROLE = ROLE_USER
+MANAGE_ROLES_PERMISSION = PERM_MANAGE_ROLES
+ACCESS_DENIED_DETAIL = SHARED_ACCESS_DENIED_DETAIL
 USER_NOT_FOUND_DETAIL = "User not found"
 ROLE_NOT_FOUND_DETAIL = "Role not found"
-USER_MANAGEMENT_AREA = "User Management"
-ROLE_MANAGEMENT_AREA = "Role Management"
+USER_MANAGEMENT_AREA = MODULE_USER_MANAGEMENT
+ROLE_MANAGEMENT_AREA = MODULE_ROLE_MANAGEMENT
 MODIFY_PERMISSIONS_ACTION = "Modify Permissions"
 
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def full_name(user: User) -> str:
     return f"{user.first_name} {user.last_name}".strip() or user.email
@@ -99,8 +113,7 @@ async def apply_user_roles(db: DBSessionDep, user_id: int, role_ids: list[int]) 
         role = await db.get(Role, role_id)
         if role is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Role ID {role_id} not found",
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Role ID {role_id} not found"
             )
         db.add(UserRole(user_id=user_id, role_id=role_id))
 
@@ -111,8 +124,7 @@ async def apply_role_permissions(db: DBSessionDep, role_id: int, permission_ids:
         perm = await db.get(Permission, permission_id)
         if perm is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Permission ID {permission_id} not found",
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Permission ID {permission_id} not found"
             )
         db.add(RolePermission(role_id=role_id, permission_id=permission_id))
 
@@ -129,14 +141,9 @@ async def apply_user_permissions_direct(
         perm = await db.get(Permission, permission_id)
         if perm is None:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Permission ID {permission_id} not found",
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Permission ID {permission_id} not found"
             )
-        db.add(UserPermission(
-            user_id=user_id,
-            permission_id=permission_id,
-            granted_by_id=granted_by_id,
-        ))
+        db.add(UserPermission(user_id=user_id, permission_id=permission_id, granted_by_id=granted_by_id))
 
 
 async def role_names_for_ids(db: DBSessionDep, role_ids: list[int]) -> list[str]:
@@ -167,9 +174,7 @@ async def fetch_role_fresh(db: DBSessionDep, role_id: int) -> Role:
 
 
 async def resolve_role_ids_for_new_user(
-    db: DBSessionDep,
-    payload_role_ids: list[int] | None,
-    current_user: User,
+    db: DBSessionDep, payload_role_ids: list[int] | None, current_user: User
 ) -> list[int]:
     role_ids = payload_role_ids or []
     if not role_ids:
@@ -183,10 +188,7 @@ async def resolve_role_ids_for_new_user(
 
 
 async def apply_user_assignment_updates(
-    db: DBSessionDep,
-    user: User,
-    payload: UserUpdateRequest,
-    current_user: User,
+    db: DBSessionDep, user: User, payload: UserUpdateRequest, current_user: User
 ) -> None:
     if payload.role_ids is None and payload.permission_ids is None:
         return
@@ -202,48 +204,42 @@ async def apply_user_assignment_updates(
 
 
 async def apply_new_user_permissions(
-    db: DBSessionDep,
-    user_id: int,
-    payload: UserCreateRequest,
-    current_user: User,
+    db: DBSessionDep, user_id: int, payload: UserCreateRequest, current_user: User
 ) -> None:
     if not payload.permission_ids:
         return
 
     await ensure_manage_roles(db, current_user)
-    await apply_user_permissions_direct(
-        db, user_id, payload.permission_ids, granted_by_id=current_user.id
-    )
+    await apply_user_permissions_direct(db, user_id, payload.permission_ids, granted_by_id=current_user.id)
 
 
 # ---------------------------------------------------------------------------
 # Me / Stats
 # ---------------------------------------------------------------------------
 
+
 @router.get("/me")
 async def current_rbac_profile(
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: DBSessionDep,
+    current_user: Annotated[User, Depends(get_current_user)], db: DBSessionDep
 ) -> UserOut:
     return await serialize_user(db, current_user)
 
 
 @router.get("/stats")
 async def dashboard_stats(
-    _current_user: Annotated[User, Depends(get_current_user)],
-    db: DBSessionDep,
+    _current_user: Annotated[User, Depends(get_current_user)], db: DBSessionDep
 ) -> DashboardStats:
     total_users = await db.scalar(select(func.count(User.id))) or 0
-    total_admins = await db.scalar(
-        select(func.count(UserRole.user_id.distinct()))
-        .join(Role, Role.id == UserRole.role_id)
-        .where(Role.role_name.in_([SUPER_ADMIN_ROLE, ADMIN_ROLE]))
-    ) or 0
+    total_admins = (
+        await db.scalar(
+            select(func.count(UserRole.user_id.distinct()))
+            .join(Role, Role.id == UserRole.role_id)
+            .where(Role.role_name.in_([SUPER_ADMIN_ROLE, ADMIN_ROLE]))
+        )
+        or 0
+    )
     return DashboardStats(
-        total_users=total_users,
-        total_admins=total_admins,
-        active_sessions=1,
-        reports_generated=0,
+        total_users=total_users, total_admins=total_admins, active_sessions=1, reports_generated=0
     )
 
 
@@ -251,10 +247,10 @@ async def dashboard_stats(
 # Users
 # ---------------------------------------------------------------------------
 
+
 @router.get("/users")
 async def list_users(
-    _: Annotated[User, Depends(require_permission("view_user"))],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_permission("view_user"))], db: DBSessionDep
 ) -> list[UserOut]:
     result = await db.execute(select(User).order_by(User.id.desc()))
     users = result.scalars().all()
@@ -269,11 +265,11 @@ async def create_user(
     db: DBSessionDep,
 ) -> UserOut:
     if payload.password != payload.confirm_password:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Passwords do not match")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=PASSWORDS_DO_NOT_MATCH_DETAIL)
 
     email_lc = payload.email.lower()
     if await db.scalar(select(User).where(User.email == email_lc)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=EMAIL_ALREADY_EXISTS_DETAIL)
 
     username = (payload.username or email_lc).strip()
     if await db.scalar(select(User).where(User.username == username)):
@@ -298,8 +294,12 @@ async def create_user(
 
     actor = full_name(current_user)
     log_audit_event(
-        db, current_user, "Create User", USER_MANAGEMENT_AREA,
-        f"{actor} created user '{user.first_name} {user.last_name}' ({email_lc})", request
+        db,
+        current_user,
+        "Create User",
+        USER_MANAGEMENT_AREA,
+        f"{actor} created user '{user.first_name} {user.last_name}' ({email_lc})",
+        request,
     )
     await db.commit()
 
@@ -322,7 +322,7 @@ async def update_user(
 
     email_lc = payload.email.lower()
     if await db.scalar(select(User).where(User.email == email_lc, User.id != user_id)):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already exists")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=EMAIL_ALREADY_EXISTS_DETAIL)
 
     username = (payload.username or email_lc).strip()
     if await db.scalar(select(User).where(User.username == username, User.id != user_id)):
@@ -340,8 +340,12 @@ async def update_user(
 
     actor = full_name(current_user)
     log_audit_event(
-        db, current_user, "Update User", USER_MANAGEMENT_AREA,
-        f"{actor} updated user '{user.first_name} {user.last_name}' ({email_lc})", request
+        db,
+        current_user,
+        "Update User",
+        USER_MANAGEMENT_AREA,
+        f"{actor} updated user '{user.first_name} {user.last_name}' ({email_lc})",
+        request,
     )
     await db.commit()
 
@@ -359,8 +363,7 @@ async def delete_user(
 ) -> dict[str, str]:
     if current_user.id == user_id:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot delete your own account"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="You cannot delete your own account"
         )
     user = await db.get(User, user_id)
     if user is None:
@@ -369,8 +372,12 @@ async def delete_user(
     actor = full_name(current_user)
     await db.delete(user)
     log_audit_event(
-        db, current_user, "Delete User", USER_MANAGEMENT_AREA,
-        f"{actor} deleted user '{name}' ({user.email})", request
+        db,
+        current_user,
+        "Delete User",
+        USER_MANAGEMENT_AREA,
+        f"{actor} deleted user '{name}' ({user.email})",
+        request,
     )
     await db.commit()
     return {"message": "User deleted successfully"}
@@ -380,18 +387,18 @@ async def delete_user(
 # Roles
 # ---------------------------------------------------------------------------
 
+
 @router.get("/roles")
 async def list_roles(
-    _: Annotated[User, Depends(require_permission(MANAGE_ROLES_PERMISSION))],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_permission(MANAGE_ROLES_PERMISSION))], db: DBSessionDep
 ) -> list[RoleOut]:
     result = await db.execute(select(Role).order_by(Role.id.asc()))
     roles = result.scalars().all()
     # Exclude auto-generated custom roles
     core_roles = [
-        r for r in roles
-        if not r.role_name.startswith("User Custom ")
-        and not r.role_name.startswith("Admin Custom ")
+        r
+        for r in roles
+        if not r.role_name.startswith("User Custom ") and not r.role_name.startswith("Admin Custom ")
     ]
     return [await serialize_role(db, role) for role in core_roles]
 
@@ -411,8 +418,12 @@ async def create_role(
     await db.flush()
     await apply_role_permissions(db, role.id, payload.permission_ids)
     log_audit_event(
-        db, current_user, "Create Role", ROLE_MANAGEMENT_AREA,
-        f"{full_name(current_user)} created role '{role_name}'", request
+        db,
+        current_user,
+        "Create Role",
+        ROLE_MANAGEMENT_AREA,
+        f"{full_name(current_user)} created role '{role_name}'",
+        request,
     )
     await db.commit()
     refetched_role = await fetch_role_fresh(db, role.id)
@@ -433,8 +444,12 @@ async def update_role(
     role.description = payload.description
     await apply_role_permissions(db, role.id, payload.permission_ids)
     log_audit_event(
-        db, current_user, "Update Role", ROLE_MANAGEMENT_AREA,
-        f"{full_name(current_user)} updated role '{role.role_name}'", request
+        db,
+        current_user,
+        "Update Role",
+        ROLE_MANAGEMENT_AREA,
+        f"{full_name(current_user)} updated role '{role.role_name}'",
+        request,
     )
     await db.commit()
     refetched_role = await fetch_role_fresh(db, role_id)
@@ -454,8 +469,12 @@ async def update_role_permissions(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=ROLE_NOT_FOUND_DETAIL)
     await apply_role_permissions(db, role.id, payload.permission_ids)
     log_audit_event(
-        db, current_user, MODIFY_PERMISSIONS_ACTION, ROLE_MANAGEMENT_AREA,
-        f"{full_name(current_user)} modified permissions for role '{role.role_name}'", request
+        db,
+        current_user,
+        MODIFY_PERMISSIONS_ACTION,
+        ROLE_MANAGEMENT_AREA,
+        f"{full_name(current_user)} modified permissions for role '{role.role_name}'",
+        request,
     )
     await db.commit()
     refetched_role = await fetch_role_fresh(db, role_id)
@@ -466,10 +485,10 @@ async def update_role_permissions(
 # Permissions
 # ---------------------------------------------------------------------------
 
+
 @router.get("/permissions")
 async def list_permissions(
-    _: Annotated[User, Depends(require_permission(MANAGE_ROLES_PERMISSION))],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_permission(MANAGE_ROLES_PERMISSION))], db: DBSessionDep
 ) -> list[PermissionOut]:
     result = await db.execute(select(Permission).order_by(Permission.permission_name))
     return [
@@ -481,6 +500,7 @@ async def list_permissions(
 # ---------------------------------------------------------------------------
 # Admin-specific permission management
 # ---------------------------------------------------------------------------
+
 
 @router.put("/users/{user_id}/permissions")
 async def set_user_direct_permissions(
@@ -497,8 +517,12 @@ async def set_user_direct_permissions(
 
     await apply_user_permissions_direct(db, user_id, payload.permission_ids, granted_by_id=current_user.id)
     log_audit_event(
-        db, current_user, MODIFY_PERMISSIONS_ACTION, ROLE_MANAGEMENT_AREA,
-        f"{full_name(current_user)} set direct permissions for '{full_name(user)}'", request
+        db,
+        current_user,
+        MODIFY_PERMISSIONS_ACTION,
+        ROLE_MANAGEMENT_AREA,
+        f"{full_name(current_user)} set direct permissions for '{full_name(user)}'",
+        request,
     )
     await db.commit()
     user = await fetch_user_fresh(db, user_id)
@@ -509,10 +533,10 @@ async def set_user_direct_permissions(
 # Admins (legacy endpoints kept for UI compatibility)
 # ---------------------------------------------------------------------------
 
+
 @router.get("/admins")
 async def list_admins(
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: DBSessionDep,
+    current_user: Annotated[User, Depends(get_current_user)], db: DBSessionDep
 ) -> list[UserOut]:
     await ensure_super_admin(db, current_user)
     result = await db.execute(
@@ -558,8 +582,12 @@ async def update_admin_permissions(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="User is not an admin")
     await apply_user_permissions_direct(db, admin_id, payload.permission_ids, granted_by_id=current_user.id)
     log_audit_event(
-        db, current_user, MODIFY_PERMISSIONS_ACTION, ROLE_MANAGEMENT_AREA,
-        f"{full_name(current_user)} updated permissions for admin '{full_name(admin)}'", request
+        db,
+        current_user,
+        MODIFY_PERMISSIONS_ACTION,
+        ROLE_MANAGEMENT_AREA,
+        f"{full_name(current_user)} updated permissions for admin '{full_name(admin)}'",
+        request,
     )
     await db.commit()
     admin = await fetch_user_fresh(db, admin_id)
@@ -570,10 +598,10 @@ async def update_admin_permissions(
 # Reports (legacy — now superseded by /api/reports/* endpoints)
 # ---------------------------------------------------------------------------
 
+
 @router.get("/reports")
 async def reports(
-    _: Annotated[User, Depends(require_permission("view_reports"))],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_permission(PERM_VIEW_REPORTS))], db: DBSessionDep
 ) -> dict[str, object]:
     from datetime import date
 
@@ -585,21 +613,24 @@ async def reports(
 
     today = date.today()
     total_users = await db.scalar(select(func.count(User.id))) or 0
-    total_admins = await db.scalar(
-        select(func.count(UserRole.user_id.distinct()))
-        .join(Role, Role.id == UserRole.role_id)
-        .where(Role.role_name.in_([ADMIN_ROLE, SUPER_ADMIN_ROLE]))
-    ) or 0
+    total_admins = (
+        await db.scalar(
+            select(func.count(UserRole.user_id.distinct()))
+            .join(Role, Role.id == UserRole.role_id)
+            .where(Role.role_name.in_([ADMIN_ROLE, SUPER_ADMIN_ROLE]))
+        )
+        or 0
+    )
     active_users = await db.scalar(select(func.count(User.id)).where(User.is_active.is_(True))) or 0
     total_blogs = await db.scalar(select(func.count(Blog.id))) or 0
-    published_blogs = await db.scalar(select(func.count(Blog.id)).where(Blog.status == "Published")) or 0
-    blogs_today = await db.scalar(
-        select(func.count(Blog.id)).where(cast(Blog.created_at, SADate) == today)
-    ) or 0
-
-    recent_logs = await db.execute(
-        select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10)
+    published_blogs = (
+        await db.scalar(select(func.count(Blog.id)).where(Blog.status == BLOG_STATUS_PUBLISHED)) or 0
     )
+    blogs_today = (
+        await db.scalar(select(func.count(Blog.id)).where(cast(Blog.created_at, SADate) == today)) or 0
+    )
+
+    recent_logs = await db.execute(select(AuditLog).order_by(AuditLog.created_at.desc()).limit(10))
     return {
         "summary": "Live RBAC report from PostgreSQL",
         "items": [

@@ -3,6 +3,8 @@ from typing import TYPE_CHECKING
 from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
+from app.constants import CASCADE_ON_DELETE, USER_ID_FOREIGN_KEY
+
 from . import Base
 
 if TYPE_CHECKING:
@@ -17,13 +19,9 @@ class Role(Base):
     description: Mapped[str] = mapped_column(default="")
 
     permissions: Mapped[list["Permission"]] = relationship(
-        secondary="role_permissions",
-        back_populates="roles"
+        secondary="role_permissions", back_populates="roles"
     )
-    users: Mapped[list["User"]] = relationship(
-        secondary="user_roles",
-        back_populates="roles"
-    )
+    users: Mapped[list["User"]] = relationship(secondary="user_roles", back_populates="roles")
 
 
 class Permission(Base):
@@ -33,10 +31,7 @@ class Permission(Base):
     permission_name: Mapped[str] = mapped_column(unique=True, index=True)
     description: Mapped[str] = mapped_column(default="")
 
-    roles: Mapped[list[Role]] = relationship(
-        secondary="role_permissions",
-        back_populates="permissions"
-    )
+    roles: Mapped[list[Role]] = relationship(secondary="role_permissions", back_populates="permissions")
 
 
 class RolePermission(Base):
@@ -44,8 +39,10 @@ class RolePermission(Base):
     __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id", ondelete="CASCADE"), index=True)
-    permission_id: Mapped[int] = mapped_column(ForeignKey("permissions.id", ondelete="CASCADE"), index=True)
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id", ondelete=CASCADE_ON_DELETE), index=True)
+    permission_id: Mapped[int] = mapped_column(
+        ForeignKey("permissions.id", ondelete=CASCADE_ON_DELETE), index=True
+    )
 
 
 class UserRole(Base):
@@ -53,5 +50,7 @@ class UserRole(Base):
     __table_args__ = (UniqueConstraint("user_id", "role_id", name="uq_user_role"),)
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), index=True)
-    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey(USER_ID_FOREIGN_KEY, ondelete=CASCADE_ON_DELETE), index=True
+    )
+    role_id: Mapped[int] = mapped_column(ForeignKey("roles.id", ondelete=CASCADE_ON_DELETE), index=True)

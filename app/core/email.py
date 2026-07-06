@@ -8,6 +8,8 @@ from smtplib import SMTPAuthenticationError, SMTPException
 from dotenv import find_dotenv, load_dotenv
 from loguru import logger
 
+from app.constants import DEFAULT_FRONTEND_URL
+
 load_dotenv(find_dotenv(usecwd=True))
 
 PLACEHOLDER_VALUES = {
@@ -68,7 +70,7 @@ def get_smtp_config() -> SMTPConfig:
         username=username,
         password=_env_first("SMTP_PASSWORD"),
         from_email=from_email,
-        frontend_url=_env_first("FRONTEND_URL") or "http://localhost:3000",
+        frontend_url=_env_first("FRONTEND_URL") or DEFAULT_FRONTEND_URL,
     )
 
 
@@ -124,7 +126,7 @@ def validate_smtp_config_for_startup() -> None:
 
 
 async def send_password_reset_email(to_email: str, token: str) -> EmailSendResult:
-    fallback_frontend_url = _env_first("FRONTEND_URL") or "http://localhost:3000"
+    fallback_frontend_url = _env_first("FRONTEND_URL") or DEFAULT_FRONTEND_URL
     try:
         config = validate_smtp_config()
     except SMTPConfigurationError as exc:

@@ -7,6 +7,20 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import Response
 from sqlalchemy import Date, cast, desc, func, select
 
+from app.constants import (
+    ACTION_APPROVE_BLOG,
+    ACTION_CREATE_BLOG,
+    ACTION_DELETE_BLOG,
+    ACTION_FAILED_LOGIN,
+    ACTION_LOGIN,
+    ACTION_LOGOUT,
+    ACTION_PUBLISH_BLOG,
+    ACTION_UPDATE_BLOG,
+    MODULE_BLOG_MANAGEMENT,
+    MODULE_ROLE_MANAGEMENT,
+    MODULE_USER_MANAGEMENT,
+    ROLE_SUPER_ADMIN,
+)
 from app.core.database import DBSessionDep
 from app.core.rbac import get_user_role_names
 from app.models.audit_log import AuditLog
@@ -24,11 +38,10 @@ router = APIRouter(prefix="/activity-logs", tags=["activity-logs"])
 
 
 async def require_super_admin(
-    current_user: Annotated[User, Depends(get_current_user)],
-    db: DBSessionDep,
+    current_user: Annotated[User, Depends(get_current_user)], db: DBSessionDep
 ) -> User:
     roles = await get_user_role_names(db, current_user.id)
-    if "Super Admin" not in roles:
+    if ROLE_SUPER_ADMIN not in roles:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access Denied. Super Admin only.")
     return current_user
 
@@ -36,6 +49,7 @@ async def require_super_admin(
 # ---------------------------------------------------------------------------
 # Activity Logs
 # ---------------------------------------------------------------------------
+
 
 @router.get("")
 async def get_activity_logs(
@@ -84,48 +98,52 @@ async def get_activity_logs(
 # Stats
 # ---------------------------------------------------------------------------
 
+
 @router.get("/stats")
 async def get_activity_stats(
-    _: Annotated[User, Depends(require_super_admin)],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_super_admin)], db: DBSessionDep
 ) -> ActivityStats:
     today = datetime.now(timezone.utc).date()
 
     async def count_action(action: str) -> int:
-        return await db.scalar(
-            select(func.count(AuditLog.id)).where(
-                AuditLog.action_type == action,
-                cast(AuditLog.created_at, Date) == today,
+        return (
+            await db.scalar(
+                select(func.count(AuditLog.id)).where(
+                    AuditLog.action_type == action, cast(AuditLog.created_at, Date) == today
+                )
             )
-        ) or 0
+            or 0
+        )
 
     async def count_module(module: str) -> int:
-        return await db.scalar(
-            select(func.count(AuditLog.id)).where(
-                AuditLog.module == module,
-                cast(AuditLog.created_at, Date) == today,
+        return (
+            await db.scalar(
+                select(func.count(AuditLog.id)).where(
+                    AuditLog.module == module, cast(AuditLog.created_at, Date) == today
+                )
             )
-        ) or 0
+            or 0
+        )
 
-    total_logins = await count_action("Login")
-    failed_logins = await count_action("Failed Login")
-    total_logouts = await count_action("Logout")
+    total_logins = await count_action(ACTION_LOGIN)
+    failed_logins = await count_action(ACTION_FAILED_LOGIN)
+    total_logouts = await count_action(ACTION_LOGOUT)
     active_sessions = max(0, total_logins - total_logouts)
-    blogs_created = await count_action("Create Blog")
-    blogs_edited = await count_action("Update Blog")
-    blogs_deleted = await count_action("Delete Blog")
-    blogs_published = await count_action("Publish Blog")
-    blogs_approved = await count_action("Approve Blog")
-    user_mgmt = await count_module("User Management")
-    role_mgmt = await count_module("Role Management")
+    blogs_created = await count_action(ACTION_CREATE_BLOG)
+    blogs_edited = await count_action(ACTION_UPDATE_BLOG)
+    blogs_deleted = await count_action(ACTION_DELETE_BLOG)
+    blogs_published = await count_action(ACTION_PUBLISH_BLOG)
+    blogs_approved = await count_action(ACTION_APPROVE_BLOG)
+    user_mgmt = await count_module(MODULE_USER_MANAGEMENT)
+    role_mgmt = await count_module(MODULE_ROLE_MANAGEMENT)
 
     # 7-day chart
     chart_data = []
     for i in range(6, -1, -1):
         d = today - timedelta(days=i)
-        count = await db.scalar(
-            select(func.count(AuditLog.id)).where(cast(AuditLog.created_at, Date) == d)
-        ) or 0
+        count = (
+            await db.scalar(select(func.count(AuditLog.id)).where(cast(AuditLog.created_at, Date) == d)) or 0
+        )
         chart_data.append({"date": d.strftime("%b %d"), "actions": count})
 
     return ActivityStats(
@@ -147,18 +165,14 @@ async def get_activity_stats(
 # Blog history (per-blog timeline)
 # ---------------------------------------------------------------------------
 
+
 @router.get("/blog-history/{blog_id}")
 async def get_blog_history(
-    blog_id: int,
-    _: Annotated[User, Depends(require_super_admin)],
-    db: DBSessionDep,
+    blog_id: int, _: Annotated[User, Depends(require_super_admin)], db: DBSessionDep
 ) -> list[dict[str, object]]:
     result = await db.execute(
         select(AuditLog)
-        .where(
-            AuditLog.module == "Blog Management",
-            AuditLog.description.ilike(f"%Blog ID: {blog_id}%"),
-        )
+        .where(AuditLog.module == MODULE_BLOG_MANAGEMENT, AuditLog.description.ilike(f"%Blog ID: {blog_id}%"))
         .order_by(AuditLog.created_at.asc())
     )
     logs = result.scalars().all()
@@ -181,33 +195,45 @@ async def get_blog_history(
 # Export CSV
 # ---------------------------------------------------------------------------
 
+
 @router.get("/export")
 async def export_activity_logs(
-    _: Annotated[User, Depends(require_super_admin)],
-    db: DBSessionDep,
+    _: Annotated[User, Depends(require_super_admin)], db: DBSessionDep
 ) -> Response:
     result = await db.execute(select(AuditLog).order_by(desc(AuditLog.created_at)))
     logs = result.scalars().all()
 
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow([
-        "ID", "User ID", "Username", "Email", "Module",
-        "Action Type", "Description", "IP Address", "Status", "Timestamp"
-    ])
+    writer.writerow(
+        [
+            "ID",
+            "User ID",
+            "Username",
+            "Email",
+            "Module",
+            "Action Type",
+            "Description",
+            "IP Address",
+            "Status",
+            "Timestamp",
+        ]
+    )
     for log in logs:
-        writer.writerow([
-            log.id,
-            log.user_id or "",
-            log.username,
-            log.email or "",
-            log.module,
-            log.action_type,
-            log.description,
-            log.ip_address or "",
-            log.status,
-            log.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") if log.created_at else "",
-        ])
+        writer.writerow(
+            [
+                log.id,
+                log.user_id or "",
+                log.username,
+                log.email or "",
+                log.module,
+                log.action_type,
+                log.description,
+                log.ip_address or "",
+                log.status,
+                log.created_at.strftime("%Y-%m-%d %H:%M:%S UTC") if log.created_at else "",
+            ]
+        )
 
     response = Response(content=output.getvalue(), media_type="text/csv")
     response.headers["Content-Disposition"] = "attachment; filename=audit_log_export.csv"
@@ -217,6 +243,7 @@ async def export_activity_logs(
 # ---------------------------------------------------------------------------
 # Sessions
 # ---------------------------------------------------------------------------
+
 
 def _format_session_duration(login_time: datetime, logout_time: datetime | None) -> str | None:
     if logout_time is None:
@@ -243,7 +270,7 @@ async def _build_admin_session(db: DBSessionDep, log: AuditLog) -> AdminSessionO
         select(AuditLog)
         .where(
             AuditLog.user_id == log.user_id,
-            AuditLog.action_type == "Logout",
+            AuditLog.action_type == ACTION_LOGOUT,
             AuditLog.created_at >= log.created_at,
         )
         .order_by(AuditLog.created_at.asc())
@@ -268,7 +295,9 @@ async def get_admin_sessions(
     page: Annotated[int, Query(ge=1)] = 1,
     size: Annotated[int, Query(ge=1, le=100)] = 20,
 ) -> AdminSessionPaginated:
-    login_query = select(AuditLog).where(AuditLog.action_type == "Login").order_by(desc(AuditLog.created_at))
+    login_query = (
+        select(AuditLog).where(AuditLog.action_type == ACTION_LOGIN).order_by(desc(AuditLog.created_at))
+    )
     total = await db.scalar(select(func.count()).select_from(login_query.subquery())) or 0
     result = await db.execute(login_query.offset((page - 1) * size).limit(size))
     login_logs = result.scalars().all()

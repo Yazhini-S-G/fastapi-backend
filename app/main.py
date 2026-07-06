@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.testclient import TestClient
 
 from app import logger
+from app.constants import DEFAULT_FRONTEND_URL
 from app.core.config import setup_logger
 from app.core.manager import lifespan
 from app.core.redis import RedisHelper
@@ -35,7 +36,7 @@ setup_logger(_settings.debug)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:3000",
+        DEFAULT_FRONTEND_URL,
         "http://127.0.0.1:3000",
         "http://127.0.0.1:5500",
         "http://localhost:5500",
@@ -56,6 +57,7 @@ app.include_router(dashboard_router, prefix="/api")
 
 
 # Static page routes
+
 
 @app.get("/", response_class=FileResponse)
 @app.get("/index.html", response_class=FileResponse)
