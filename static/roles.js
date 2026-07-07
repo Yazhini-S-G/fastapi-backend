@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         permListDiv.innerHTML = allPermissions.map(p => `
             <label class="checkbox-label">
-                <input type="checkbox" name="permissions" value="${p.id}" ${role && role.permissions.includes(p.permission_name) ? 'checked' : ''}>
+                <input type="checkbox" name="permissions" value="${p.id}" ${role?.permissions?.includes(p.permission_name) ? 'checked' : ''}>
                 ${p.permission_name} <span style="color: var(--text-muted); font-size: 0.8rem;">- ${p.description}</span>
             </label>
         `).join('');

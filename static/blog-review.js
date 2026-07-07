@@ -49,23 +49,34 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         list.innerHTML = blogs.map(blog => {
-            const featuredImageHtml = blog.featured_image
-                ? `<img src="${imageUrl(blog.featured_image)}" class="blog-thumb" alt="">`
-                : "";
+            let featuredImageHtml = "";
+            if (blog.featured_image) {
+                featuredImageHtml = `<img src="${imageUrl(blog.featured_image)}" class="blog-thumb" alt="">`;
+            }
+
             const categoryName = blog.category_name || "Uncategorized";
-            const blogMeta = `By ${blog.author_name} · ${categoryName} · ${new Date(blog.created_at).toLocaleDateString()}`;
-            const reviewActions = AuthGuard.hasPermission("review_blog")
-                ? `<button class="btn-ghost set-status" data-id="${blog.id}" data-status="Pending Review">Approve</button><button class="btn-danger set-status" data-id="${blog.id}" data-status="Rejected">Reject</button>`
-                : "";
-            const publishAction = AuthGuard.hasPermission("publish_blog")
-                ? `<button class="btn-primary set-status" data-id="${blog.id}" data-status="Published">Publish</button>`
-                : "";
-            const featureAction = AuthGuard.hasPermission("feature_blog")
-                ? `<button class="btn-ghost feature-blog" data-id="${blog.id}">${blog.is_featured ? "Unfeature" : "Feature"}</button>`
-                : "";
-            const deleteAction = AuthGuard.hasPermission("delete_blog")
-                ? `<button class="btn-danger delete-blog" data-id="${blog.id}">Delete</button>`
-                : "";
+            const blogMeta = `By ${blog.author_name} Â· ${categoryName} Â· ${new Date(blog.created_at).toLocaleDateString()}`;
+
+            let reviewActions = "";
+            if (AuthGuard.hasPermission("review_blog")) {
+                reviewActions = `<button class="btn-ghost set-status" data-id="${blog.id}" data-status="Pending Review">Approve</button><button class="btn-danger set-status" data-id="${blog.id}" data-status="Rejected">Reject</button>`;
+            }
+
+            let publishAction = "";
+            if (AuthGuard.hasPermission("publish_blog")) {
+                publishAction = `<button class="btn-primary set-status" data-id="${blog.id}" data-status="Published">Publish</button>`;
+            }
+
+            let featureAction = "";
+            if (AuthGuard.hasPermission("feature_blog")) {
+                const featureLabel = blog.is_featured ? "Unfeature" : "Feature";
+                featureAction = `<button class="btn-ghost feature-blog" data-id="${blog.id}">${featureLabel}</button>`;
+            }
+
+            let deleteAction = "";
+            if (AuthGuard.hasPermission("delete_blog")) {
+                deleteAction = `<button class="btn-danger delete-blog" data-id="${blog.id}">Delete</button>`;
+            }
 
             return `
             <article class="glass blog-card">
