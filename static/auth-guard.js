@@ -80,9 +80,9 @@ class AuthGuard {
         const requestOptions = options ?? {};
         const isFormData = requestOptions.body instanceof FormData;
         const headers = {
-            ...(!isFormData && { 'Content-Type': 'application/json' }),
-            ...(token && { 'Authorization': `Bearer ${token}` }),
-            ...(requestOptions.headers || {})
+            ...(!isFormData && { "Content-Type": "application/json" }),
+            ...(token && { Authorization: `Bearer ${token}` }),
+            ...requestOptions.headers,
         };
 
         const response = await fetch(`${this.BASE_URL}${endpoint}`, {

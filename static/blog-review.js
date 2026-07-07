@@ -1,8 +1,25 @@
-document.addEventListener("DOMContentLoaded", async () => {
 function imageUrl(path) {
-    if (!path) return "";
-    return path.startsWith("http") ? path : `${AuthGuard.BASE_URL}${path}`;
+    if (!path) {
+        return "";
+    }
+
+    return path.startsWith("http")
+        ? path
+        : `${AuthGuard.BASE_URL}${path}`;
 }
+
+function stripHtml(html) {
+    const div = document.createElement("div");
+    div.textContent = html;
+    return div.textContent;
+}
+
+function dashboardPath() {
+    window.location.href = AuthGuard.dashboardFor();
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+
 
     const currentUser = await AuthGuard.requireFreshUser();
     if (!currentUser) return;
@@ -11,17 +28,11 @@ function imageUrl(path) {
         return;
     }
     AuthGuard.setupSidebar();
-    document.getElementById("nav-dashboard").addEventListener("click", () => {
-        window.location.href = AuthGuard.dashboardFor();
-    });
+    document.getElementById("nav-dashboard").addEventListener("click", dashboardPath);
 
     let blogs = [];
 
-    function stripHtml(html) {
-        const div = document.createElement("div");
-        div.textContent = html;
-        return div.textContent;
-    }
+    
 
     async function loadReview() {
         const params = new URLSearchParams();
