@@ -66,7 +66,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (search) params.set("search", search);
         if (status) params.set("status_filter", status);
         if (category) params.set("category_id", category);
-        blogs = await AuthGuard.apiCall(`/blogs${params.toString() ? `?${params}` : ""}`);
+        const queryString = params.toString();`r`n        blogs = await AuthGuard.apiCall("/blogs" + (queryString ? "?" + queryString : ""));
         renderBlogs();
     }
 
@@ -175,3 +175,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     await loadCategories();
     await Promise.all([loadBlogs(), loadAnalytics()]);
 });
+

@@ -15,12 +15,10 @@ function stripHtml(html) {
 }
 
 function dashboardPath() {
-    window.location.href = AuthGuard.dashboardFor();
+    globalThis.window.location.href = AuthGuard.dashboardFor();
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-
-
     const currentUser = await AuthGuard.requireFreshUser();
     if (!currentUser) return;
     if (!AuthGuard.hasPermission("review_blog") && !AuthGuard.hasPermission("publish_blog")) {
@@ -31,8 +29,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("nav-dashboard").addEventListener("click", dashboardPath);
 
     let blogs = [];
-
-    
 
     async function loadReview() {
         const params = new URLSearchParams();
@@ -47,27 +43,49 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     function renderReview() {
         const list = document.getElementById("review-list");
-        if (!blogs.length) {
+        if (blogs.length === 0) {
             list.innerHTML = '<div class="glass blog-card">No blogs need review.</div>';
             return;
         }
-        list.innerHTML = blogs.map(blog => `
+
+        list.innerHTML = blogs.map(blog => {
+            const featuredImageHtml = blog.featured_image
+                ? `<img src="${imageUrl(blog.featured_image)}" class="blog-thumb" alt="">`
+                : "";
+            const categoryName = blog.category_name || "Uncategorized";
+            const blogMeta = `By ${blog.author_name} · ${categoryName} · ${new Date(blog.created_at).toLocaleDateString()}`;
+            const reviewActions = AuthGuard.hasPermission("review_blog")
+                ? `<button class="btn-ghost set-status" data-id="${blog.id}" data-status="Pending Review">Approve</button><button class="btn-danger set-status" data-id="${blog.id}" data-status="Rejected">Reject</button>`
+                : "";
+            const publishAction = AuthGuard.hasPermission("publish_blog")
+                ? `<button class="btn-primary set-status" data-id="${blog.id}" data-status="Published">Publish</button>`
+                : "";
+            const featureAction = AuthGuard.hasPermission("feature_blog")
+                ? `<button class="btn-ghost feature-blog" data-id="${blog.id}">${blog.is_featured ? "Unfeature" : "Feature"}</button>`
+                : "";
+            const deleteAction = AuthGuard.hasPermission("delete_blog")
+                ? `<button class="btn-danger delete-blog" data-id="${blog.id}">Delete</button>`
+                : "";
+
+            return `
             <article class="glass blog-card">
-                ${blog.featured_image ? `<img src="${imageUrl(blog.featured_image)}" class="blog-thumb" alt="">` : ""}
+                ${featuredImageHtml}
                 <div class="blog-card-body">
                     <div class="badge badge-warning">${blog.status}</div>
                     <h3>${blog.title}</h3>
-                    <div class="blog-meta">By ${blog.author_name} Â· ${blog.category_name || "Uncategorized"} Â· ${new Date(blog.created_at).toLocaleDateString()}</div>
+                    <div class="blog-meta">${blogMeta}</div>
                     <p>${stripHtml(blog.content).slice(0, 220)}</p>
                     <div class="action-row">
-                        ${AuthGuard.hasPermission("review_blog") ? `<button class="btn-ghost set-status" data-id="${blog.id}" data-status="Pending Review">Approve</button><button class="btn-danger set-status" data-id="${blog.id}" data-status="Rejected">Reject</button>` : ""}
-                        ${AuthGuard.hasPermission("publish_blog") ? `<button class="btn-primary set-status" data-id="${blog.id}" data-status="Published">Publish</button>` : ""}
-                        ${AuthGuard.hasPermission("feature_blog") ? `<button class="btn-ghost feature-blog" data-id="${blog.id}">${blog.is_featured ? "Unfeature" : "Feature"}</button>` : ""}
-                        ${AuthGuard.hasPermission("delete_blog") ? `<button class="btn-danger delete-blog" data-id="${blog.id}">Delete</button>` : ""}
+                        ${reviewActions}
+                        ${publishAction}
+                        ${featureAction}
+                        ${deleteAction}
                     </div>
                 </div>
             </article>
-        `).join("");
+        `;
+        }).join("");
+
         document.querySelectorAll(".set-status").forEach(btn => btn.addEventListener("click", () => setStatus(btn.dataset.id, btn.dataset.status)));
         document.querySelectorAll(".feature-blog").forEach(btn => btn.addEventListener("click", () => featureBlog(btn.dataset.id)));
         document.querySelectorAll(".delete-blog").forEach(btn => btn.addEventListener("click", () => deleteBlog(btn.dataset.id)));
@@ -92,3 +110,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     ["review-search", "review-status"].forEach(id => document.getElementById(id).addEventListener("input", loadReview));
     await loadReview();
 });
+

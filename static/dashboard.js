@@ -24,7 +24,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     // Render Chart
     const ctx = document.getElementById("activityChart").getContext("2d");
 
-    new Chart(ctx, {
+    const activityChart = new Chart(ctx, {
         type: "line",
         data: {
             labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
@@ -58,4 +58,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             },
         },
     });
+
+    window.addEventListener("beforeunload", () => activityChart.destroy(), { once: true });
 });

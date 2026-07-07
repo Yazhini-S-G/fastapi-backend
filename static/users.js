@@ -96,9 +96,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             document.getElementById('u-email').value = u.email;
             document.getElementById('u-active').checked = u.is_active;
             
-            const roleIds = allRoles.filter(r => u.roles.includes(r.role_name)).map(r => r.id.toString());
+            const roleIds = new Set(allRoles.filter(r => u.roles.includes(r.role_name)).map(r => r.id.toString()));
             document.querySelectorAll('input[name="roles"]').forEach(cb => {
-                cb.checked = roleIds.includes(cb.value);
+                cb.checked = roleIds.has(cb.value);
             });
         } else {
             document.getElementById('modal-title').textContent = 'Create User';
@@ -169,3 +169,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     loadData();
 });
+

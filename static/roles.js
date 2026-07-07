@@ -51,14 +51,14 @@ document.addEventListener("DOMContentLoaded", async () => {
     const permListDiv = document.getElementById('permissions-list');
 
     function openModal(id = null) {
-        const role = id ? allRoles.find(x => x.id == id) : null;
+        const role = allRoles.find(x => x.id == id) ?? null;
         if(id && !role) return;
 
         document.getElementById('modal-title').textContent = id ? 'Edit Role' : 'Create Role';
-        document.getElementById('r-id').value = role ? role.id : '';
-        document.getElementById('r-name').value = role ? role.role_name : '';
+        document.getElementById('r-id').value = role?.id ?? '';
+        document.getElementById('r-name').value = role?.role_name ?? '';
         document.getElementById('r-name').disabled = !!role;
-        document.getElementById('r-desc').value = role ? role.description : '';
+        document.getElementById('r-desc').value = role?.description ?? '';
         document.getElementById('r-msg').textContent = '';
 
         permListDiv.innerHTML = allPermissions.map(p => `
@@ -105,3 +105,4 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     loadData();
 });
+
